@@ -12,13 +12,13 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         // Allow CORS for all API endpoints used by frontend
         registry.addMapping("/api/**")
-                .allowedOrigins("http://192.168.100.3:3000", "http://localhost:3000")
+                .allowedOrigins("https://starnet.ajirikenya.com")
                 .allowedMethods("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
         // Allow CORS for uploaded static files
         registry.addMapping("/uploads/**")
-                .allowedOrigins("http://localhost:3000")
+                .allowedOrigins("https://starnet.ajirikenya.com")
                 .allowedMethods("GET", "OPTIONS")
                 .allowedHeaders("*");
     }
@@ -26,6 +26,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:uploads/");
+                .addResourceLocations("file:/app/uploads/");
     }
 }

@@ -1,0 +1,135 @@
+package com.starnet.SslAgency.interapplication.model;
+
+import com.starnet.SslAgency.processor.model.Staff;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Pattern;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.util.HashSet;
+import java.util.Set;
+
+@Entity
+
+@Table(name = "interApplicants")
+@EntityListeners(AuditingEntityListener.class)
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class InterApplication {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank
+    private String firstName;
+    private String middleName;
+    @NotBlank
+    private String lastName;
+
+    @Pattern(regexp = "^(\\+254|0)(7\\d{8}|1\\d{8})$", message = "Invalid Kenyan phone number")
+    private String phoneNumber;
+
+    @Email
+    @NotBlank
+    private String email;
+
+    @Past
+    private LocalDate dob;
+
+    private Integer age;
+
+    private String nationality;
+    private String religion;
+
+    @Enumerated(EnumType.STRING)
+    private MaritalStatus maritalStatus;
+
+    private String numberOfKids;
+
+    @Enumerated(EnumType.STRING)
+    private EducationLevel educationLevel;
+
+    private String currentProfession;
+    private Double currentSalary;
+
+    private String currentLocation;
+
+    @ElementCollection(targetClass = InterApplication.Languages.class)
+    @CollectionTable(name = "intApplication_Languages", joinColumns = @JoinColumn(name = "InterApplication_id"))
+    @Enumerated(EnumType.STRING)
+    private Set<InterApplication.Languages> languages = new HashSet<>();
+
+    @Enumerated(EnumType.STRING)
+    private EmploymentStatus employmentStatus;
+
+    @Enumerated(EnumType.STRING)
+    private JobRecruitment jobRecruitment;
+
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Staff vettedBy;
+    private LocalDateTime vettedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Staff approvedBy;
+    private LocalDateTime approvedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Staff hiredBy;
+    private LocalDateTime hiredAt;
+
+    @CreatedDate
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    @PreUpdate
+    private void calculateAge() {
+        if (dob != null) {
+            this.age = Period.between(dob, LocalDate.now()).getYears();
+        }
+    }
+
+    public enum Languages {
+        ENGLISH, KISWAHILI, ARABIC
+    }
+
+    public enum EducationLevel {
+        PRIMARY, SECONDARY, UNIVERSITY
+    }
+
+    public enum EmploymentStatus {
+        EMPLOYED, NOT_EMPLOYED
+    }
+
+    public enum MaritalStatus {
+        SINGLE, MARRIED
+    }
+
+    public enum JobRecruitment {
+        ADMINISTRATIONS, AGRICULTURE, CAREGIVING, CLEANING, CONSTRUCTIONS, ELECTRICIANS, DOMESTIC_WORKERS, EDUCATION, GARMENTS, HEAVY_EQUIPMENT, HOTEL_HOSPITALITY, MANUFACTURING, MEDICAL, MECHANICAL, POWER_GAS_WATER, SECURITY, SUPERMARKETS, TECHNOLOGY
+    }
+
+    public enum Status {
+        PENDING, VETTED, APPROVED, REJECTED, HIRED
+    }
+
+}
