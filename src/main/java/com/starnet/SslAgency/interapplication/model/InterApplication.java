@@ -1,5 +1,6 @@
 package com.starnet.SslAgency.interapplication.model;
 
+import com.starnet.SslAgency.media.model.MediaFile;
 import com.starnet.SslAgency.processor.model.Staff;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -17,7 +18,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -99,6 +102,9 @@ public class InterApplication {
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "interApplication", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MediaFile> mediaFiles = new ArrayList<>();
 
     @PrePersist
     @PreUpdate

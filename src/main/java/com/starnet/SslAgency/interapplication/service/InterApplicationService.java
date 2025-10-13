@@ -146,7 +146,7 @@ public class InterApplicationService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only hired applicants can be restored!");
         }
         if (interApp.getApprovedBy() == null || interApp.getApprovedAt() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot restore because applicant was never approved before hiring")
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot restore because applicant was never approved before hiring");
         }
 
         interApp.setStatus(InterApplication.Status.APPROVED);

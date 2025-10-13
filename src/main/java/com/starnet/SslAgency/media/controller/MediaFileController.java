@@ -3,6 +3,7 @@ package com.starnet.SslAgency.media.controller;
 
 import com.starnet.SslAgency.application.model.Application;
 import com.starnet.SslAgency.application.repository.ApplicationRepository;
+import com.starnet.SslAgency.interapplication.repository.InterApplicationRepository;
 import com.starnet.SslAgency.media.model.MediaFile;
 import com.starnet.SslAgency.media.service.MediaFileService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,8 @@ public class MediaFileController {
     private MediaFileService mediaFileService;
     @Autowired
     private ApplicationRepository applicationRepository;
+    @Autowired
+    private InterApplicationRepository interApplicationRepository;
 
     @PostMapping(value = "/{applicationId}/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MediaFile> uploadPhoto(

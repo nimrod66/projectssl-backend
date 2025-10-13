@@ -10,10 +10,10 @@ import com.starnet.SslAgency.media.model.MediaFile;
 import com.starnet.SslAgency.processor.model.Staff;
 import com.starnet.SslAgency.processor.repository.StaffRepository;
 import jakarta.validation.Valid;
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -84,7 +84,7 @@ public class InterApplicationController {
     @PatchMapping("/{id}/restore")
     public ResponseEntity<InterApplicationResponseDto> restoreToApproved(@PathVariable Long id, Authentication auth) {
         Staff staff = getAuthenticatedStaff(auth);
-        InterApplication interApp = interApplicationService.restoreToApproved(id, staffId());
+        InterApplication interApp = interApplicationService.restoreToApproved(id, staff.getId());
         return ResponseEntity.ok(toResponseDto(interApp));
     }
 
@@ -96,13 +96,13 @@ public class InterApplicationController {
     }
 
     private InterApplicationPublicDto toPublicDto(InterApplication interApp) {
-        List<MediaFile> mediaFiles = interApp.getMediaFiles() != null ? app.getMediaFiles() : List.of();
+        List<MediaFile> mediaFiles = interApp.getMediaFiles() != null ? interApp.getMediaFiles() : List.of();
         return InterApplicationPublicDto.builder()
                 .id(interApp.getId())
                 .fullName(Stream.of(interApp.getFirstName(), interApp.getMiddleName(), interApp.getLastName()).filter(s -> s != null && !s.isBlank()).reduce((s1, s2) -> s1 + " " + s2).orElse(""))
                 .age(interApp.getAge())
                 .nationality(interApp.getNationality())
-                .experience(interApp.getExperience())
+                .currentProfession(interApp.getCurrentProfession())
                 .currentLocation(interApp.getCurrentLocation())
                 .languages(interApp.getLanguages() != null ? interApp.getLanguages().stream().map(Enum::name).toList() : List.of())
                 .videos(mediaFiles.stream().filter(m -> m.getKind() == MediaFile.Kind.VIDEO)
@@ -133,7 +133,7 @@ public class InterApplicationController {
                 .status(interA.getStatus().name())
                 .createdAt(interA.getCreatedAt() != null ? interA.getCreatedAt().toString() : null)
                 .updatedAt(interA.getUpdatedAt() != null ? interA.getUpdatedAt().toString : null)
-                .vettedById(interA.getVettedBy() != null ? interA.getVettedBy().getid() : null)
+                .vettedById(interA.getVettedBy() != null ? interA.getVettedBy().getId() : null)
                 .vettedByName(interA.getVettedBy() != null ? interA.getVettedBy().getFirstName() + " " + interA.getVettedBy().getLastName() : null)
                 .approvedById(interA.getApprovedBy() != null ? interA.getApprovedBy().getId() : null)
                 .approvedByName(interA.getApprovedBy() != null ? interA.getApprovedBy().getFirstName() + " " + interA.getVettedBy().getLastName() : null)

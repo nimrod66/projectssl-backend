@@ -2,6 +2,7 @@ package com.starnet.SslAgency.media.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.starnet.SslAgency.application.model.Application;
+import com.starnet.SslAgency.interapplication.model.InterApplication;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,6 +35,11 @@ public class MediaFile {
     @JoinColumn(name = "application_id", nullable = false)
     @JsonIgnore
     private Application application;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "inter_application_id")
+    @JsonIgnore
+    private InterApplication interApplication;
 
     public enum Kind {PASSPORT, NATIONAL_ID, FULL_PHOTO, RESUME, BIRTH_CERTIFICATE, GOOD_CONDUCT, VIDEO, SHOWCASE_PHOTO}
 }
