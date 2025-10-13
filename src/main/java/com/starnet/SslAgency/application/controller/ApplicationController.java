@@ -127,6 +127,7 @@ public class ApplicationController {
                 .languages(app.getLanguages() != null ? app.getLanguages().stream().map(Enum::name).toList() : List.of())
                 .videos(mediaFiles.stream().filter(m -> m.getKind() == MediaFile.Kind.VIDEO)
                         .map(MediaFile::getFileUrl).toList())
+
                 .showcasePhotos(mediaFiles.stream().filter(m -> m.getKind() == MediaFile.Kind.SHOWCASE_PHOTO)
                         .map(MediaFile::getFileUrl).toList())
                 .hasCat(app.getHasCat())

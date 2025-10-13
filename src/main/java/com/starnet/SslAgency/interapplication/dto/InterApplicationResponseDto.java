@@ -38,6 +38,8 @@ public class InterApplicationResponseDto {
     private Long vettedById;
     private String vettedByName;
     private Long approvedById;
+    private String approvedByName;
+
 
     private List<String> passportPhotos;
     private List<String> fullPhotos;
