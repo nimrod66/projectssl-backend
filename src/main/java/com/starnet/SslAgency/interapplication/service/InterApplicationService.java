@@ -54,7 +54,7 @@ public class InterApplicationService {
                 )
                 .currentProfession(dto.getCurrentProfession())
                 .currentSalary(dto.getCurrentSalary())
-                .curentLocation(dto.getCurrentLocation())
+                .currentLocation(dto.getCurrentLocation())
                 .languages(dto.getLanguages() != null
                         ? dto.getLanguages().stream()
                         .map(lang -> InterApplication.Languages.valueOf(lang.toUpperCase()))
@@ -66,7 +66,7 @@ public class InterApplicationService {
                         : null
                 )
                 .jobRecruitment(dto.getJobRecruitment() != null
-                        ? InterApplication.JobRecruitment.valueOf(dto.getJobRecruitment().toUppperCase().replace(' ', '_'))
+                        ? InterApplication.JobRecruitment.valueOf(dto.getJobRecruitment().toUpperCase().replace(' ', '_'))
                         : null
                 )
 
