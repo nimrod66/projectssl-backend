@@ -39,9 +39,19 @@ public class InterApplicationService {
                 .dob(dto.getDob())
                 .nationality(dto.getNationality())
                 .religion(dto.getReligion())
-                .maritalStatus(dto.getMaritalStatus())
+                .maritalStatus(
+                        dto.getMaritalStatus() != null
+                                ? InterApplication.MaritalStatus.valueOf(dto.getMaritalStatus().toUpperCase())
+                                : null
+
+                )
                 .numberOfKids(dto.getNumberOfKids())
-                .educationLevel(dto.getEducationLevel())
+                .educationLevel(
+                        dto.getEducationLevel() != null
+                                ? InterApplication.EducationLevel.valueOf(dto.getEducationLevel().toUpperCase())
+                                : null
+
+                )
                 .currentProfession(dto.getCurrentProfession())
                 .currentSalary(dto.getCurrentSalary())
                 .curentLocation(dto.getCurrentLocation())
