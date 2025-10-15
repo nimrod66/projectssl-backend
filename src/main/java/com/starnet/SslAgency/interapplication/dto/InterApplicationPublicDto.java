@@ -16,7 +16,7 @@ public class InterApplicationPublicDto {
     private String fullName;
     private Integer age;
     private String nationality;
-    private String experience;
+    private String currentProfession;
     private String currentLocation;
     private List<String> languages;
 
