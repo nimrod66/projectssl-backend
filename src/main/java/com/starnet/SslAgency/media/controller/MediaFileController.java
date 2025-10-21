@@ -145,7 +145,7 @@ public class MediaFileController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Showcase photos can only be added after vetting");
         }
 
-        List<MediaFile> existing = mediaFileService.findByApplicationAndKind(interApplicationId, MediaFile.Kind.SHOWCASE_PHOTO);
+        List<MediaFile> existing = mediaFileService.findByInterApplicationAndKind(interApplicationId, MediaFile.Kind.SHOWCASE_PHOTO);
         existing.forEach(mediaFileService::delete);
 
         List<MediaFile> saved = new ArrayList<>();
