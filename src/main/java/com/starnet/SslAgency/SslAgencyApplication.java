@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableJpaAuditing
 @EnableJpaRepositories
 @EntityScan
-public class SslAgencyApplication {
+public class  SslAgencyApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(SslAgencyApplication.class, args);

@@ -77,7 +77,7 @@ public class InterApplication {
 
     @Enumerated(EnumType.STRING)
     private EmploymentStatus employmentStatus;
-
+ 
     @Enumerated(EnumType.STRING)
     private JobRecruitment jobRecruitment;
 
