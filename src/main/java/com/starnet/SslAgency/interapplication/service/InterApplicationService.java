@@ -110,12 +110,12 @@ public class InterApplicationService {
 
         Staff staff = staffRepository.findById(staffId).orElseThrow(() -> new RuntimeException("Staff not found"));
 
-        List<MediaFile> showcase = mediaFileService.findByApplicationAndKind(interAppId, MediaFile.Kind.SHOWCASE_PHOTO);
+        List<MediaFile> showcase = mediaFileService.findByInterApplicationAndKind(interAppId, MediaFile.Kind.SHOWCASE_PHOTO);
         if (showcase.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one showcase photo is required");
         }
 
-        List<MediaFile> videos = mediaFileService.findByApplicationAndKind(interAppId, MediaFile.Kind.VIDEO);
+        List<MediaFile> videos = mediaFileService.findByInterApplicationAndKind(interAppId, MediaFile.Kind.VIDEO);
         if (videos.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The youtube link is required for one to proceed");
         }

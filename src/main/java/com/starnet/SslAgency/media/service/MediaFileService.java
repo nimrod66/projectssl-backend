@@ -2,6 +2,8 @@ package com.starnet.SslAgency.media.service;
 
 import com.starnet.SslAgency.application.model.Application;
 import com.starnet.SslAgency.application.repository.ApplicationRepository;
+import com.starnet.SslAgency.interapplication.model.InterApplication;
+import com.starnet.SslAgency.interapplication.repository.InterApplicationRepository;
 import com.starnet.SslAgency.media.model.MediaFile;
 import com.starnet.SslAgency.media.repository.MediaFileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,7 @@ import java.util.UUID;
 
 @Service
 public class MediaFileService {
+
     @Value("${file.upload-dir}")
     private String uploadDir;
 
@@ -29,9 +32,25 @@ public class MediaFileService {
     @Autowired
     private ApplicationRepository applicationRepository;
 
+    @Autowired
+    private InterApplicationRepository interApplicationRepository;
+
     public MediaFile store(Long applicationId, MultipartFile file, MediaFile.Kind kind) throws IOException {
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
+
+        return saveFile(file, kind, app, null);
+    }
+
+    public MediaFile storeInter(Long interApplicationId, MultipartFile file, MediaFile.Kind kind) throws IOException {
+        InterApplication interApp = interApplicationRepository.findById(interApplicationId)
+                .orElseThrow(() -> new RuntimeException("InterApplication not found"));
+
+        return saveFile(file, kind, null, interApp);
+    }
+
+    private MediaFile saveFile(MultipartFile file, MediaFile.Kind kind,
+                               Application app, InterApplication interApp) throws IOException {
 
         Path uploadPath = Paths.get(uploadDir);
         if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
@@ -54,7 +73,7 @@ public class MediaFileService {
                 || kind == MediaFile.Kind.BIRTH_CERTIFICATE
                 || kind == MediaFile.Kind.GOOD_CONDUCT)
                 && !(ext.equals(".pdf") || ext.equals(".doc") || ext.equals(".docx"))) {
-            throw new IllegalArgumentException("Invalid format. Only PDF/DOC/DOCX allowed " + kind);
+            throw new IllegalArgumentException("Invalid format. Only PDF/DOC/DOCX allowed for " + kind);
         }
 
         MediaFile media = MediaFile.builder()
@@ -63,6 +82,7 @@ public class MediaFileService {
                 .fileUrl("/uploads/" + filename)
                 .kind(kind)
                 .application(app)
+                .interApplication(interApp)
                 .build();
 
         return mediaFileRepository.save(media);
@@ -72,14 +92,16 @@ public class MediaFileService {
         return mediaFileRepository.findByApplicationIdAndKind(applicationId, kind);
     }
 
+    public List<MediaFile> findByInterApplicationAndKind(Long interApplicationId, MediaFile.Kind kind) {
+        return mediaFileRepository.findByInterApplicationIdAndKind(interApplicationId, kind);
+    }
+
     public void delete(MediaFile mf) {
         mediaFileRepository.delete(mf);
         try {
-            Files.deleteIfExists(Paths.get(uploadDir).resolve(mf.getFileUrl().replace("/uploads/", "")));
-
+            Path filePath = Paths.get(uploadDir).resolve(mf.getFileUrl().replace("/uploads/", ""));
+            Files.deleteIfExists(filePath);
         } catch (IOException ignored) {
         }
     }
 }
-
-
