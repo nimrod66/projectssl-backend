@@ -44,7 +44,7 @@ public class MediaFileService {
 
     public MediaFile storeInter(Long interApplicationId, MultipartFile file, MediaFile.Kind kind) throws IOException {
         InterApplication interApp = interApplicationRepository.findById(interApplicationId)
-                .orElseThrow(() -> new RuntimeException("InterApplication not found"));
+                .orElseThrow(() -> new RuntimeException("International Application not found"));
 
         return saveFile(file, kind, null, interApp);
     }

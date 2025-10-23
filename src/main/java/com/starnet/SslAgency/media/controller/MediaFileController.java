@@ -102,7 +102,7 @@ public class MediaFileController {
         if (kind == MediaFile.Kind.RESUME) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Use the resume endpoint for resumes");
         }
-        return ResponseEntity.ok(mediaFileService.store(interApplicationId, file, kind));
+        return ResponseEntity.ok(mediaFileService.storeInter(interApplicationId, file, kind));
     }
 
     @PostMapping(value = "/inter/{interApplicationId}/resume", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -111,7 +111,7 @@ public class MediaFileController {
             @RequestPart("file") MultipartFile file,
             @RequestParam("kind") MediaFile.Kind kind
     ) throws IOException {
-        return ResponseEntity.ok(mediaFileService.store(interApplicationId, file, kind));
+        return ResponseEntity.ok(mediaFileService.storeInter(interApplicationId, file, kind));
     }
 
     @PostMapping(value = "/inter/{interApplicationId}/videos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -128,7 +128,7 @@ public class MediaFileController {
 
         List<MediaFile> saved = new ArrayList<>();
         for (MultipartFile f : files) {
-            saved.add(mediaFileService.store(interApplicationId, f, MediaFile.Kind.VIDEO));
+            saved.add(mediaFileService.storeInter(interApplicationId, f, MediaFile.Kind.VIDEO));
         }
         return ResponseEntity.ok(saved);
     }
@@ -150,7 +150,7 @@ public class MediaFileController {
 
         List<MediaFile> saved = new ArrayList<>();
         for (MultipartFile f : files) {
-            saved.add(mediaFileService.store(interApplicationId, f, MediaFile.Kind.SHOWCASE_PHOTO));
+            saved.add(mediaFileService.storeInter(interApplicationId, f, MediaFile.Kind.SHOWCASE_PHOTO));
         }
         return ResponseEntity.ok(saved);
     }

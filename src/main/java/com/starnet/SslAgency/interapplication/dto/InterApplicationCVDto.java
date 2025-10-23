@@ -1,9 +1,17 @@
 package com.starnet.SslAgency.interapplication.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
 import java.util.List;
 
-public class InterapplicationCVDto {
+
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class InterApplicationCVDto {
 
     private String fullName;
     private String nationality;
