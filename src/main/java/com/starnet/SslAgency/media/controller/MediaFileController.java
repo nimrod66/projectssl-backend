@@ -51,23 +51,13 @@ public class MediaFileController {
         return ResponseEntity.ok(mediaFileService.store(applicationId, file, kind));
     }
 
-    @PostMapping(value = "/application/{applicationId}/videos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping("/application/{applicationId}/video-link")
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<List<MediaFile>> uploadApplicationVideos(
+    public ResponseEntity<MediaFile> uploadApplicationVideoLink(
             @PathVariable Long applicationId,
-            @RequestPart("files") List<MultipartFile> files
-    ) throws IOException {
-        Application app = applicationRepository.findById(applicationId)
-                .orElseThrow(() -> new RuntimeException("Application not found"));
-        if (app.getStatus() == Application.Status.PENDING) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Videos can only be added after vetting");
-        }
-
-        List<MediaFile> saved = new ArrayList<>();
-        for (MultipartFile f : files) {
-            saved.add(mediaFileService.store(applicationId, f, MediaFile.Kind.VIDEO));
-        }
-        return ResponseEntity.ok(saved);
+            @RequestParam("youtubeUrl") String youtubeUrl
+    ) {
+        return ResponseEntity.ok(mediaFileService.storeVideoLink(applicationId, youtubeUrl));
     }
 
     @PostMapping(value = "/application/{applicationId}/showcase", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -114,24 +104,15 @@ public class MediaFileController {
         return ResponseEntity.ok(mediaFileService.storeInter(interApplicationId, file, kind));
     }
 
-    @PostMapping(value = "/inter/{interApplicationId}/videos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping("/inter/{interApplicationId}/video-link")
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<List<MediaFile>> uploadInterVideos(
+    public ResponseEntity<MediaFile> uploadInterVideoLink(
             @PathVariable Long interApplicationId,
-            @RequestPart("files") List<MultipartFile> files
-    ) throws IOException {
-        InterApplication interApp = interApplicationRepository.findById(interApplicationId)
-                .orElseThrow(() -> new RuntimeException("InterApplication not found"));
-        if (interApp.getStatus() == InterApplication.Status.PENDING) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Videos can only be added after vetting");
-        }
-
-        List<MediaFile> saved = new ArrayList<>();
-        for (MultipartFile f : files) {
-            saved.add(mediaFileService.storeInter(interApplicationId, f, MediaFile.Kind.VIDEO));
-        }
-        return ResponseEntity.ok(saved);
+            @RequestParam("youtubeUrl") String youtubeUrl
+    ) {
+        return ResponseEntity.ok(mediaFileService.storeInterVideoLink(interApplicationId, youtubeUrl));
     }
+
 
     @PostMapping(value = "/inter/{interApplicationId}/showcase", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")

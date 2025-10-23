@@ -35,17 +35,16 @@ public class MediaFileService {
     @Autowired
     private InterApplicationRepository interApplicationRepository;
 
+
     public MediaFile store(Long applicationId, MultipartFile file, MediaFile.Kind kind) throws IOException {
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
-
         return saveFile(file, kind, app, null);
     }
 
     public MediaFile storeInter(Long interApplicationId, MultipartFile file, MediaFile.Kind kind) throws IOException {
         InterApplication interApp = interApplicationRepository.findById(interApplicationId)
                 .orElseThrow(() -> new RuntimeException("International Application not found"));
-
         return saveFile(file, kind, null, interApp);
     }
 
@@ -64,9 +63,6 @@ public class MediaFileService {
             ext = safeOriginal.substring(dotIndex).toLowerCase();
         }
 
-        String filename = UUID.randomUUID() + ext;
-        Path filePath = uploadPath.resolve(filename);
-
         if ((kind == MediaFile.Kind.RESUME
                 || kind == MediaFile.Kind.NATIONAL_ID
                 || kind == MediaFile.Kind.BIRTH_CERTIFICATE
@@ -75,6 +71,8 @@ public class MediaFileService {
             throw new IllegalArgumentException("Invalid format. Only PDF/DOC/DOCX allowed for " + kind);
         }
 
+        String filename = UUID.randomUUID() + ext;
+        Path filePath = uploadPath.resolve(filename);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         MediaFile media = MediaFile.builder()
@@ -82,6 +80,35 @@ public class MediaFileService {
                 .fileType(file.getContentType())
                 .fileUrl("/uploads/" + filename)
                 .kind(kind)
+                .application(app)
+                .interApplication(interApp)
+                .build();
+
+        return mediaFileRepository.save(media);
+    }
+
+    public MediaFile storeVideoLink(Long applicationId, String youtubeUrl) {
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+        return saveVideoLink(youtubeUrl, app, null);
+    }
+
+    public MediaFile storeInterVideoLink(Long interApplicationId, String youtubeUrl) {
+        InterApplication interApp = interApplicationRepository.findById(interApplicationId)
+                .orElseThrow(() -> new RuntimeException("InterApplication not found"));
+        return saveVideoLink(youtubeUrl, null, interApp);
+    }
+
+    private MediaFile saveVideoLink(String youtubeUrl, Application app, InterApplication interApp) {
+        if (!youtubeUrl.startsWith("http") || !youtubeUrl.contains("youtube.com")) {
+            throw new IllegalArgumentException("Invalid YouTube URL");
+        }
+
+        MediaFile media = MediaFile.builder()
+                .fileName("YouTube Video")
+                .fileType("video/link")
+                .fileUrl(youtubeUrl)
+                .kind(MediaFile.Kind.VIDEO)
                 .application(app)
                 .interApplication(interApp)
                 .build();
