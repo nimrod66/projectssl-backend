@@ -221,6 +221,10 @@ public class ApplicationService {
         return applicationRepository.save(app);
     }
 
+    public void deleteApplication(Long id) {
+        applicationRepository.deleteById(id);
+    }
+
 
     public Page<Application> listByStatus(String status, Pageable pageable) {
         Application.Status st = Application.Status.valueOf(status.toUpperCase());

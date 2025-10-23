@@ -163,4 +163,9 @@ public class InterApplicationService {
         return interApplicationRepository.save(interApp);
     }
 
+    public void deleteInternationalApplication(Long id) {
+        interApplicationRepository.deleteById(id);
+    }
+
+
 }

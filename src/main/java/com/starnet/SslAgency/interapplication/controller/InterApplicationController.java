@@ -84,8 +84,14 @@ public class InterApplicationController {
     @PatchMapping("/{id}/restore")
     public ResponseEntity<InterApplicationResponseDto> restoreToApproved(@PathVariable Long id, Authentication auth) {
         Staff staff = getAuthenticatedStaff(auth);
-        InterApplication interApp = interApplicationService.restoreToApproved(id,  staff.getId());
+        InterApplication interApp = interApplicationService.restoreToApproved(id, staff.getId());
         return ResponseEntity.ok(toResponseDto(interApp));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteInternationalApplication(@PathVariable Long id) {
+        interApplicationService.deleteInternationalApplication(id);
+        return ResponseEntity.noContent().build();
     }
 
     private Staff getAuthenticatedStaff(Authentication auth) {

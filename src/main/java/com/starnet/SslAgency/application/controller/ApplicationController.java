@@ -107,6 +107,12 @@ public class ApplicationController {
         return p.map(this::toResponseDto);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteApplication(@PathVariable Long id) {
+        applicationService.deleteApplication(id);
+        return ResponseEntity.noContent().build();
+    }
+
     private Staff getAuthenticatedStaff(Authentication auth) {
         if (auth == null || !(auth.getPrincipal() instanceof Staff staff)) {
             throw new RuntimeException("No authenticated staff found");
