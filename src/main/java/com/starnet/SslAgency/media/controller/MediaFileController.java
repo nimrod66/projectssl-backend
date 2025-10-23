@@ -39,6 +39,9 @@ public class MediaFileController {
         if (kind == MediaFile.Kind.RESUME) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Use the resume endpoint for resumes");
         }
+        if (kind == MediaFile.Kind.VIDEO) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Use the correct video link endpoint");
+        }
         return ResponseEntity.ok(mediaFileService.store(applicationId, file, kind));
     }
 
@@ -57,6 +60,11 @@ public class MediaFileController {
             @PathVariable Long applicationId,
             @RequestParam("youtubeUrl") String youtubeUrl
     ) {
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Application not found"));
+        if (app.getStatus() == Application.Status.PENDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Video links can oly be added after vetting");
+        }
         return ResponseEntity.ok(mediaFileService.storeVideoLink(applicationId, youtubeUrl));
     }
 
@@ -110,6 +118,11 @@ public class MediaFileController {
             @PathVariable Long interApplicationId,
             @RequestParam("youtubeUrl") String youtubeUrl
     ) {
+        InterApplication interApp = interApplicationRepository.findById(interApplicationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "International Application not found"));
+        if (interApp.getStatus() == Application.Status.PENDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Video links can oly be added after vetting");
+        }
         return ResponseEntity.ok(mediaFileService.storeInterVideoLink(interApplicationId, youtubeUrl));
     }
 
