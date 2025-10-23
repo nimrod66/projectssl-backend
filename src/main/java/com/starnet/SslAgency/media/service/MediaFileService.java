@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -38,13 +39,13 @@ public class MediaFileService {
 
     public MediaFile store(Long applicationId, MultipartFile file, MediaFile.Kind kind) throws IOException {
         Application app = applicationRepository.findById(applicationId)
-                .orElseThrow(() -> new RuntimeException("Application not found"));
+                .orElseThrow(() -> new NoSuchElementException("Application not found"));
         return saveFile(file, kind, app, null);
     }
 
     public MediaFile storeInter(Long interApplicationId, MultipartFile file, MediaFile.Kind kind) throws IOException {
         InterApplication interApp = interApplicationRepository.findById(interApplicationId)
-                .orElseThrow(() -> new RuntimeException("International Application not found"));
+                .orElseThrow(() -> new NoSuchElementException("International Application not found"));
         return saveFile(file, kind, null, interApp);
     }
 
@@ -89,13 +90,13 @@ public class MediaFileService {
 
     public MediaFile storeVideoLink(Long applicationId, String youtubeUrl) {
         Application app = applicationRepository.findById(applicationId)
-                .orElseThrow(() -> new RuntimeException("Application not found"));
+                .orElseThrow(() -> new NoSuchElementException("Application not found"));
         return saveVideoLink(youtubeUrl, app, null);
     }
 
     public MediaFile storeInterVideoLink(Long interApplicationId, String youtubeUrl) {
         InterApplication interApp = interApplicationRepository.findById(interApplicationId)
-                .orElseThrow(() -> new RuntimeException("InterApplication not found"));
+                .orElseThrow(() -> new NoSuchElementException("InterApplication not found"));
         return saveVideoLink(youtubeUrl, null, interApp);
     }
 
