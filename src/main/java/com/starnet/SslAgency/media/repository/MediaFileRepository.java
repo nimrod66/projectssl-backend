@@ -7,8 +7,6 @@ import java.util.List;
 
 
 public interface MediaFileRepository extends JpaRepository<MediaFile, Long> {
-    List<MediaFile> findByApplicationId(Long applicationId);
-
     List<MediaFile> findByApplicationIdAndKind(Long applicationId, MediaFile.Kind kind);
 
     List<MediaFile> findByInterApplicationIdAndKind(Long interApplicationId, MediaFile.Kind kind);

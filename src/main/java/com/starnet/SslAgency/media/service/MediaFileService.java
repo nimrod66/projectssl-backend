@@ -67,14 +67,15 @@ public class MediaFileService {
         String filename = UUID.randomUUID() + ext;
         Path filePath = uploadPath.resolve(filename);
 
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
         if ((kind == MediaFile.Kind.RESUME
+                || kind == MediaFile.Kind.NATIONAL_ID
                 || kind == MediaFile.Kind.BIRTH_CERTIFICATE
                 || kind == MediaFile.Kind.GOOD_CONDUCT)
                 && !(ext.equals(".pdf") || ext.equals(".doc") || ext.equals(".docx"))) {
             throw new IllegalArgumentException("Invalid format. Only PDF/DOC/DOCX allowed for " + kind);
         }
+
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         MediaFile media = MediaFile.builder()
                 .fileName(safeOriginal)
