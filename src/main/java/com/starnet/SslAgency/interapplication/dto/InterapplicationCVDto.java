@@ -3,7 +3,7 @@ package com.starnet.SslAgency.interapplication.dto;
 import java.time.LocalDate;
 import java.util.List;
 
-public class interapplicationCVDto {
+public class InterapplicationCVDto {
 
     private String fullName;
     private String nationality;
