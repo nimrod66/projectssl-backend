@@ -20,7 +20,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +32,30 @@ public class InterApplicationService {
 
     @Autowired
     private MediaFileService mediaFileService;
+
+    public static Specification<InterApplication> filterBy(InterApplicationFilterDto filter) {
+        return (root, query, builder) -> {
+            List<javax.persistence.criteria.Predicate> predicates = new ArrayList<>();
+
+            if (filter.getNationality() != null && !filter.getNationality().isEmpty()) {
+                predicates.add(
+                        builder.equal(root.get("nationality"), filter.getNationality())
+                );
+            }
+
+            if (filter.getJobRecruitment() != null && !filter.getJobRecruitment().isEmpty()) {
+                predicates.add(
+                        builder.like(
+                                builder.lower(root.get("jobRecruitment").as(String.class)),
+                                "%" + filter.getJobRecruitment().toLowerCase() + "%"
+                        )
+                );
+            }
+
+            // Combine all predicates with AND
+            return builder.and(predicates.toArray(new javax.persistence.criteria.Predicate[0]));
+        };
+    }
 
     public InterApplicationCVDto generateCVDto(Long id) {
         InterApplication interApp = interApplicationRepository.findById(id)
@@ -64,7 +87,6 @@ public class InterApplicationService {
                 .employmentStatus(interApp.getEmploymentStatus() != null ? interApp.getEmploymentStatus().name() : null)
                 .build();
     }
-
 
     public InterApplication createInterApplication(InterApplicationRequestDto dto) {
         InterApplication interApplication = InterApplication.builder()
@@ -204,36 +226,5 @@ public class InterApplicationService {
         interApplicationRepository.deleteById(id);
     }
 
-    public class ApplicationSpecification {
 
-        public static class InterApplicationSpecification {
-
-        }
-
-        // Creates the dynamic Specification object from the DTO
-        public static Specification<InterApplication> filterBy(InterApplicationFilterDto filter) {
-
-            return (root, query, builder) -> {
-                List<Predicate> predicates = new ArrayList<>();
-
-                if (filter.getNationality() != null && !filter.getNationality().isEmpty()) {
-                    predicates.add((Predicate) builder.equal(
-                            root.get("nationality"),
-                            filter.getNationality()
-                    ));
-                }
-
-                if (filter.getJobRecruitment() != null && !filter.getJobRecruitment().isEmpty()) {
-                    predicates.add((Predicate) builder.like(
-                            builder.lower(root.get("jobRecruitment")),
-                            "%" + filter.getJobRecruitment().toLowerCase() + "%"
-                    ));
-                }
-
-                Predicate[] predicateArray = predicates.toArray(new Predicate[0]);
-                return builder.and();
-            };
-
-        }
-    }
 }
