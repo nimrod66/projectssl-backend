@@ -1,14 +1,9 @@
 package com.starnet.SslAgency.interapplication.controller;
 
 
-import com.starnet.SslAgency.application.dto.ApplicationFilterDto;
-import com.starnet.SslAgency.application.dto.ApplicationResponseDto;
-import com.starnet.SslAgency.application.model.Application;
-import com.starnet.SslAgency.interapplication.dto.InterApplicationCVDto;
-import com.starnet.SslAgency.interapplication.dto.InterApplicationPublicDto;
-import com.starnet.SslAgency.interapplication.dto.InterApplicationRequestDto;
-import com.starnet.SslAgency.interapplication.dto.InterApplicationResponseDto;
+import com.starnet.SslAgency.interapplication.dto.*;
 import com.starnet.SslAgency.interapplication.model.InterApplication;
+import com.starnet.SslAgency.interapplication.repository.InterApplicationRepository;
 import com.starnet.SslAgency.interapplication.service.InterApplicationService;
 import com.starnet.SslAgency.media.model.MediaFile;
 import com.starnet.SslAgency.processor.model.Staff;
@@ -32,6 +27,9 @@ public class InterApplicationController {
     @Autowired
     private StaffRepository staffRepository;
 
+    @Autowired
+    private InterApplicationRepository interApplicationRepository;
+
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<InterApplicationResponseDto> createApplication(@RequestBody @Valid InterApplicationRequestDto dto) {
         InterApplication interApplication = interApplicationService.createInterApplication(dto);
@@ -50,18 +48,19 @@ public class InterApplicationController {
                 .map(this::toPublicDto)
                 .toList();
     }
+
     @PostMapping("/filter")
-    public List<Application> findApplications(InterApplicationFilterDto filter) {
+    public List<InterApplication> findInterApplications(InterApplicationFilterDto filter) {
         if (filter.getNationality() != null && filter.getJobRecruitment() != null) {
-            return applicationRepository.findByNationalityAndJobRecruitment(
+            return interApplicationRepository.findByNationalityAndJobRecruitment(
                     filter.getNationality(),
                     filter.getJobRecruitment()
             );
         }
 
-        return applicationRepository.findAll();
+        return interApplicationRepository.findAll();
     }
-    }
+
     @GetMapping("/{id}")
     public ResponseEntity<InterApplicationResponseDto> getInterApplication(@PathVariable Long id) {
         InterApplication interApplication = interApplicationService.getInterApplication(id);
