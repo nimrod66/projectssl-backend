@@ -4,6 +4,7 @@ import com.starnet.SslAgency.application.model.Application;
 import com.starnet.SslAgency.application.repository.ApplicationRepository;
 import com.starnet.SslAgency.interapplication.model.InterApplication;
 import com.starnet.SslAgency.interapplication.repository.InterApplicationRepository;
+import com.starnet.SslAgency.media.dto.YoutubeLinkRequest;
 import com.starnet.SslAgency.media.model.MediaFile;
 import com.starnet.SslAgency.media.service.MediaFileService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,17 +57,20 @@ public class MediaFileController {
 
     @PostMapping("/application/{applicationId}/video-link")
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
-    public ResponseEntity<MediaFile> uploadApplicationVideoLink(
+    public ResponseEntity<MediaFile> uploadVideoLink(
             @PathVariable Long applicationId,
-            @RequestParam("youtubeUrl") String youtubeUrl
+            @RequestBody YoutubeLinkRequest request
     ) {
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Application not found"));
+
         if (app.getStatus() == Application.Status.PENDING) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Video links can oly be added after vetting");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Video links can only be added after vetting");
         }
-        return ResponseEntity.ok(mediaFileService.storeVideoLink(applicationId, youtubeUrl));
+
+        return ResponseEntity.ok(mediaFileService.storeVideoLink(applicationId, request.getYoutubeUrl()));
     }
+
 
     @PostMapping(value = "/application/{applicationId}/showcase", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
@@ -116,14 +120,16 @@ public class MediaFileController {
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<MediaFile> uploadInterVideoLink(
             @PathVariable Long interApplicationId,
-            @RequestParam("youtubeUrl") String youtubeUrl
+            @RequestBody YoutubeLinkRequest request
     ) {
         InterApplication interApp = interApplicationRepository.findById(interApplicationId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "International Application not found"));
-        if (interApp.getStatus() == Application.Status.PENDING) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Video links can oly be added after vetting");
+
+        if (interApp.getStatus() == InterApplication.Status.PENDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Video links can only be added after vetting");
         }
-        return ResponseEntity.ok(mediaFileService.storeInterVideoLink(interApplicationId, youtubeUrl));
+
+        return ResponseEntity.ok(mediaFileService.storeInterVideoLink(interApplicationId, request.getYoutubeUrl()));
     }
 
 

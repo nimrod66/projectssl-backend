@@ -31,28 +31,38 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
+        // Allow preflight OPTIONS requests to pass through
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.info("No JWT found in request headers");
+            chain.doFilter(request, response);
+            return;
+        }
 
-            try {
-                // Parse JWT and extract email
-                Claims claims = jwtUtil.parse(token);
-                String email = claims.getSubject();
+        String token = authHeader.substring(7);
 
-                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    staffRepository.findByEmail(email).ifPresent(staff -> {
-                        // Attach role to authentication
-                        var authority = new SimpleGrantedAuthority("ROLE_" + staff.getRole().name());
-                        var authToken = new UsernamePasswordAuthenticationToken(staff, null, List.of(authority));
-                        SecurityContextHolder.getContext().setAuthentication(authToken);
-                    });
-                }
+        try {
+            Claims claims = jwtUtil.parse(token);
+            String email = claims.getSubject();
 
-            } catch (Exception e) {
-                log.warn("JWT invalid or expired: {}", e.getMessage());
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                staffRepository.findByEmail(email).ifPresent(staff -> {
+                    log.info("JWT valid for user: {}, role: {}", staff.getEmail(), staff.getRole());
+                    // Attach role with ROLE_ prefix
+                    var authority = new SimpleGrantedAuthority("ROLE_" + staff.getRole().name());
+                    var authToken = new UsernamePasswordAuthenticationToken(staff, null, List.of(authority));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                });
             }
+
+        } catch (Exception e) {
+            log.warn("JWT invalid or expired: {}", e.getMessage());
         }
 
         chain.doFilter(request, response);

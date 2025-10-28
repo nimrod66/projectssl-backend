@@ -1,5 +1,6 @@
 package com.starnet.SslAgency.interapplication.service;
 
+import com.starnet.SslAgency.interapplication.dto.InterApplicationCVDto;
 import com.starnet.SslAgency.interapplication.dto.InterApplicationRequestDto;
 import com.starnet.SslAgency.interapplication.model.InterApplication;
 import com.starnet.SslAgency.interapplication.repository.InterApplicationRepository;
@@ -28,6 +29,38 @@ public class InterApplicationService {
 
     @Autowired
     private MediaFileService mediaFileService;
+
+    public InterApplicationCVDto generateCVDto(Long id) {
+        InterApplication interApp = interApplicationRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found with ID: " + id));
+
+        String fullName = String.format("%s %s %s",
+                interApp.getFirstName() != null ? interApp.getFirstName() : "",
+                interApp.getMiddleName() != null ? interApp.getMiddleName() : "",
+                interApp.getLastName() != null ? interApp.getLastName() : "").trim();
+
+        List<String> languageList = interApp.getLanguages() != null
+                ? interApp.getLanguages().stream().map(Enum::name).toList()
+                : List.of();
+
+        return InterApplicationCVDto.builder()
+                .id(interApp.getId())
+                .fullName(fullName)
+                .nationality(interApp.getNationality())
+                .jobRecruitment(interApp.getJobRecruitment() != null ? interApp.getJobRecruitment().name() : null)
+                .religion(interApp.getReligion())
+                .currentProfession(interApp.getCurrentProfession())
+                .currentSalary(interApp.getCurrentSalary())
+                .dob(interApp.getDob())
+                .age(interApp.getAge())
+                .maritalStatus(interApp.getMaritalStatus() != null ? interApp.getMaritalStatus().name() : null)
+                .numberOfKids(interApp.getNumberOfKids())
+                .educationLevel(interApp.getEducationLevel() != null ? interApp.getEducationLevel().name() : null)
+                .languages(languageList)
+                .employmentStatus(interApp.getEmploymentStatus() != null ? interApp.getEmploymentStatus().name() : null)
+                .build();
+    }
+
 
     public InterApplication createInterApplication(InterApplicationRequestDto dto) {
         InterApplication interApplication = InterApplication.builder()

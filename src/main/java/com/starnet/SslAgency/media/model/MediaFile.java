@@ -32,12 +32,12 @@ public class MediaFile {
     private Kind kind;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "application_id", nullable = false)
+    @JoinColumn(name = "application_id", nullable = true)
     @JsonIgnore
     private Application application;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "inter_application_id")
+    @JoinColumn(name = "inter_application_id", nullable = true)
     @JsonIgnore
     private InterApplication interApplication;
 

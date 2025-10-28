@@ -36,7 +36,6 @@ public class MediaFileService {
     @Autowired
     private InterApplicationRepository interApplicationRepository;
 
-
     public MediaFile store(Long applicationId, MultipartFile file, MediaFile.Kind kind) throws IOException {
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new NoSuchElementException("Application not found"));
@@ -58,22 +57,12 @@ public class MediaFileService {
         String original = Objects.requireNonNull(file.getOriginalFilename());
         String safeOriginal = original.replaceAll("\\s+", "_");
 
-        String ext = "";
-        int dotIndex = safeOriginal.lastIndexOf(".");
-        if (dotIndex != -1) {
-            ext = safeOriginal.substring(dotIndex).toLowerCase();
-        }
-
-        if ((kind == MediaFile.Kind.RESUME
-                || kind == MediaFile.Kind.NATIONAL_ID
-                || kind == MediaFile.Kind.BIRTH_CERTIFICATE
-                || kind == MediaFile.Kind.GOOD_CONDUCT)
-                && !(ext.equals(".pdf") || ext.equals(".doc") || ext.equals(".docx"))) {
-            throw new IllegalArgumentException("Invalid format. Only PDF/DOC/DOCX allowed for " + kind);
-        }
+        String ext = getFileExtension(safeOriginal);
+        validateFileExtension(kind, ext);
 
         String filename = UUID.randomUUID() + ext;
         Path filePath = uploadPath.resolve(filename);
+
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         MediaFile media = MediaFile.builder()
@@ -86,6 +75,21 @@ public class MediaFileService {
                 .build();
 
         return mediaFileRepository.save(media);
+    }
+
+    private String getFileExtension(String filename) {
+        int dotIndex = filename.lastIndexOf(".");
+        return (dotIndex != -1) ? filename.substring(dotIndex).toLowerCase() : "";
+    }
+
+    private void validateFileExtension(MediaFile.Kind kind, String ext) {
+        if ((kind == MediaFile.Kind.RESUME
+                || kind == MediaFile.Kind.NATIONAL_ID
+                || kind == MediaFile.Kind.BIRTH_CERTIFICATE
+                || kind == MediaFile.Kind.GOOD_CONDUCT)
+                && !(ext.equals(".pdf") || ext.equals(".doc") || ext.equals(".docx"))) {
+            throw new IllegalArgumentException("Invalid format. Only PDF/DOC/DOCX allowed for " + kind);
+        }
     }
 
     public MediaFile storeVideoLink(Long applicationId, String youtubeUrl) {
@@ -127,8 +131,11 @@ public class MediaFileService {
 
     public void delete(MediaFile mf) {
         mediaFileRepository.delete(mf);
+
         try {
-            Path filePath = Paths.get(uploadDir).resolve(mf.getFileUrl().replace("/uploads/", ""));
+            Path filePath = Paths.get(uploadDir).resolve(
+                    mf.getFileUrl().replace("/uploads/", "")
+            );
             Files.deleteIfExists(filePath);
         } catch (IOException ignored) {
         }

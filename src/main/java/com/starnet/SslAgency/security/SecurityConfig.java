@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -23,8 +24,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> {
-                }) // uses your WebConfig for CORS
+                .cors(Customizer.withDefaults())// uses your WebConfig for CORS
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers(HttpMethod.POST, "/api/applications").permitAll()
@@ -32,6 +32,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/applications/public").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/international").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/international/public").permitAll()
+
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/media/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
@@ -43,6 +44,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/international/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/international/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/international/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/staff/**").authenticated()
+
                         .anyRequest().denyAll()
                 )
                 .sessionManagement(session -> session

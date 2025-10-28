@@ -1,6 +1,7 @@
 package com.starnet.SslAgency.interapplication.controller;
 
 
+import com.starnet.SslAgency.interapplication.dto.InterApplicationCVDto;
 import com.starnet.SslAgency.interapplication.dto.InterApplicationPublicDto;
 import com.starnet.SslAgency.interapplication.dto.InterApplicationRequestDto;
 import com.starnet.SslAgency.interapplication.dto.InterApplicationResponseDto;
@@ -52,6 +53,13 @@ public class InterApplicationController {
         InterApplication interApplication = interApplicationService.getInterApplication(id);
         return ResponseEntity.ok(toResponseDto(interApplication));
     }
+
+    @GetMapping("/{id}/cv")
+    public ResponseEntity<InterApplicationCVDto> getCV(@PathVariable Long id) {
+        InterApplicationCVDto dto = interApplicationService.generateCVDto(id);
+        return ResponseEntity.ok(dto);
+    }
+
 
     @PatchMapping("/{id}/vet")
     public ResponseEntity<InterApplicationResponseDto> vet(@PathVariable Long id, Authentication auth) {
@@ -118,12 +126,33 @@ public class InterApplicationController {
                 .build();
     }
 
+    private InterApplicationCVDto toCVDto(InterApplication interA) {
+        return InterApplicationCVDto.builder()
+                .id(interA.getId())
+                .fullName(Stream.of(interA.getFirstName(), interA.getMiddleName(), interA.getLastName()).filter(s -> s != null && !s.isBlank()).reduce((s1, s2) -> s1 + " " + s2).orElse(""))
+                .nationality(interA.getNationality())
+                .jobRecruitment(interA.getJobRecruitment() != null ? interA.getJobRecruitment().name() : null)
+                .currentProfession(interA.getCurrentProfession())
+                .currentSalary(interA.getCurrentSalary())
+                .dob(interA.getDob())
+                .age(interA.getAge())
+                .maritalStatus(interA.getMaritalStatus() != null ? interA.getMaritalStatus().name() : null)
+                .numberOfKids(interA.getNumberOfKids())
+                .educationLevel(interA.getEducationLevel() != null ? interA.getEducationLevel().name() : null)
+                .languages(interA.getLanguages() != null ? interA.getLanguages().stream().map(Enum::name).toList() : List.of())
+                .employmentStatus(interA.getEmploymentStatus() != null ? interA.getEmploymentStatus().name() : null)
+
+                .build();
+
+    }
 
     private InterApplicationResponseDto toResponseDto(InterApplication interA) {
         List<MediaFile> mediaFiles = interA.getMediaFiles() != null ? interA.getMediaFiles() : List.of();
         return InterApplicationResponseDto.builder()
                 .id(interA.getId())
                 .fullName(Stream.of(interA.getFirstName(), interA.getMiddleName(), interA.getLastName()).filter(s -> s != null && !s.isBlank()).reduce((s1, s2) -> s1 + " " + s2).orElse(""))
+                .phoneNumber(interA.getPhoneNumber())
+                .email(interA.getEmail())
                 .dob(interA.getDob())
                 .age(interA.getAge())
                 .nationality(interA.getNationality())
@@ -132,6 +161,7 @@ public class InterApplicationController {
                 .numberOfKids(interA.getNumberOfKids())
                 .educationLevel(interA.getEducationLevel() != null ? interA.getEducationLevel().name() : null)
                 .currentProfession(interA.getCurrentProfession())
+                .currentSalary(interA.getCurrentSalary())
                 .currentLocation(interA.getCurrentLocation())
                 .languages(interA.getLanguages() != null ? interA.getLanguages().stream().map(Enum::name).toList() : List.of())
                 .employmentStatus(interA.getEmploymentStatus() != null ? interA.getEmploymentStatus().name() : null)
