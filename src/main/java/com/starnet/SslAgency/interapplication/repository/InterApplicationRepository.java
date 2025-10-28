@@ -8,4 +8,5 @@ import java.util.*;
 public interface InterApplicationRepository extends JpaRepository<InterApplication, Long> {
     List<InterApplication> findByStatus(InterApplication.Status status, Sort createdAt);
 
+    List<InterApplication> findByNationalityAndJobRecruitment(String nationality, String jobRecruitment);
 }
