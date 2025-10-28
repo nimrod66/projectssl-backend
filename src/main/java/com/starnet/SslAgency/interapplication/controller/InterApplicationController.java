@@ -1,6 +1,9 @@
 package com.starnet.SslAgency.interapplication.controller;
 
 
+import com.starnet.SslAgency.application.dto.ApplicationFilterDto;
+import com.starnet.SslAgency.application.dto.ApplicationResponseDto;
+import com.starnet.SslAgency.application.model.Application;
 import com.starnet.SslAgency.interapplication.dto.InterApplicationCVDto;
 import com.starnet.SslAgency.interapplication.dto.InterApplicationPublicDto;
 import com.starnet.SslAgency.interapplication.dto.InterApplicationRequestDto;
@@ -47,7 +50,18 @@ public class InterApplicationController {
                 .map(this::toPublicDto)
                 .toList();
     }
+    @PostMapping("/filter")
+    public List<Application> findApplications(InterApplicationFilterDto filter) {
+        if (filter.getNationality() != null && filter.getJobRecruitment() != null) {
+            return applicationRepository.findByNationalityAndJobRecruitment(
+                    filter.getNationality(),
+                    filter.getJobRecruitment()
+            );
+        }
 
+        return applicationRepository.findAll();
+    }
+    }
     @GetMapping("/{id}")
     public ResponseEntity<InterApplicationResponseDto> getInterApplication(@PathVariable Long id) {
         InterApplication interApplication = interApplicationService.getInterApplication(id);
