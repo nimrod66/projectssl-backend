@@ -204,37 +204,36 @@ public class InterApplicationService {
         interApplicationRepository.deleteById(id);
     }
 
-            public class InterApplicationSpecification {
+    public class ApplicationSpecification {
 
-                public static Specification<InterApplication> filterBy(InterApplicationFilterDto filter) {
-                    return (root, query, builder) -> {
+        public static class InterApplicationSpecification {
 
-                        // Start with a base predicate (always true)
-                        var predicate = builder.conjunction();
+        }
 
-                        // 1. Filter by Nationality (Exact Match)
-                        if (filter.getNationality() != null && !filter.getNationality().isEmpty()) {
-                            predicate = builder.and(
-                                    predicate,
-                                    builder.equal(root.get("nationality"), filter.getNationality())
-                            );
-                        }
+        // Creates the dynamic Specification object from the DTO
+        public static Specification<InterApplication> filterBy(InterApplicationFilterDto filter) {
 
-                        // 2. Filter by Job Recruitment (Case-Insensitive LIKE Match)
-                        if (filter.getJobRecruitment() != null && !filter.getJobRecruitment().isEmpty()) {
-                            predicate = builder.and(
-                                    predicate,
-                                    builder.like(
-                                            builder.lower(root.get("jobRecruitment")),
-                                            "%" + filter.getJobRecruitment().toLowerCase() + "%"
-                                    )
-                            );
-                        }
+            return (root, query, builder) -> {
+                List<Predicate> predicates = new ArrayList<>();
 
-                        return predicate;
-                    };
+                if (filter.getNationality() != null && !filter.getNationality().isEmpty()) {
+                    predicates.add((Predicate) builder.equal(
+                            root.get("nationality"),
+                            filter.getNationality()
+                    ));
                 }
-            }
 
+                if (filter.getJobRecruitment() != null && !filter.getJobRecruitment().isEmpty()) {
+                    predicates.add((Predicate) builder.like(
+                            builder.lower(root.get("jobRecruitment")),
+                            "%" + filter.getJobRecruitment().toLowerCase() + "%"
+                    ));
+                }
+
+                Predicate[] predicateArray = predicates.toArray(new Predicate[0]);
+                return builder.and();
+            };
+
+        }
+    }
 }
-
