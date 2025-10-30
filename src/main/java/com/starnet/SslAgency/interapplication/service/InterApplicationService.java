@@ -204,36 +204,37 @@ public class InterApplicationService {
         interApplicationRepository.deleteById(id);
     }
 
-    public class ApplicationSpecification {
+            public class InterApplicationSpecification {
 
-        public static class InterApplicationSpecification {
+                public static Specification<InterApplication> filterBy(InterApplicationFilterDto filter) {
+                    return (root, query, builder) -> {
 
-        }
+                        // Start with a base predicate (always true)
+                        var predicate = builder.conjunction();
 
-        // Creates the dynamic Specification object from the DTO
-        public static Specification<InterApplication> filterBy(InterApplicationFilterDto filter) {
+                        // 1. Filter by Nationality (Exact Match)
+                        if (filter.getNationality() != null && !filter.getNationality().isEmpty()) {
+                            predicate = builder.and(
+                                    predicate,
+                                    builder.equal(root.get("nationality"), filter.getNationality())
+                            );
+                        }
 
-            return (root, query, builder) -> {
-                List<Predicate> predicates = new ArrayList<>();
+                        // 2. Filter by Job Recruitment (Case-Insensitive LIKE Match)
+                        if (filter.getJobRecruitment() != null && !filter.getJobRecruitment().isEmpty()) {
+                            predicate = builder.and(
+                                    predicate,
+                                    builder.like(
+                                            builder.lower(root.get("jobRecruitment")),
+                                            "%" + filter.getJobRecruitment().toLowerCase() + "%"
+                                    )
+                            );
+                        }
 
-                if (filter.getNationality() != null && !filter.getNationality().isEmpty()) {
-                    predicates.add((Predicate) builder.equal(
-                            root.get("nationality"),
-                            filter.getNationality()
-                    ));
+                        return predicate;
+                    };
                 }
+            }
 
-                if (filter.getJobRecruitment() != null && !filter.getJobRecruitment().isEmpty()) {
-                    predicates.add((Predicate) builder.like(
-                            builder.lower(root.get("jobRecruitment")),
-                            "%" + filter.getJobRecruitment().toLowerCase() + "%"
-                    ));
-                }
-
-                Predicate[] predicateArray = predicates.toArray(new Predicate[0]);
-                return builder.and();
-            };
-
-        }
-    }
 }
+
