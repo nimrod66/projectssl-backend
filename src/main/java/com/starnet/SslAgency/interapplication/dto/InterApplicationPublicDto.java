@@ -22,6 +22,7 @@ public class InterApplicationPublicDto {
 
     private List<String> videos;
     private List<String> showcasePhotos;
+    private String videoUrl;
 }
 
 

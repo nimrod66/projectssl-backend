@@ -45,4 +45,5 @@ public class InterApplicationRequestDto {
     private List<String> languages;
     private String employmentStatus;
     private String jobRecruitment;
+    private String videoUrl;
 }

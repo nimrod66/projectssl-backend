@@ -3,6 +3,7 @@ package com.starnet.SslAgency.interapplication.model;
 import com.starnet.SslAgency.media.model.MediaFile;
 import com.starnet.SslAgency.processor.model.Staff;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
@@ -25,7 +26,7 @@ import java.util.Set;
 
 @Entity
 
-@Table(name = "interApplicants")
+@Table(name = "inter_applicants")
 @EntityListeners(AuditingEntityListener.class)
 @Data
 @NoArgsConstructor
@@ -84,6 +85,8 @@ public class InterApplication {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    private String videoUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private Staff vettedBy;
     private LocalDateTime vettedAt;
@@ -105,6 +108,10 @@ public class InterApplication {
 
     @OneToMany(mappedBy = "interApplication", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MediaFile> mediaFiles = new ArrayList<>();
+
+    @JsonIgnore
+    private String passwordHash;
+    private String referenceNumber;
 
     @PrePersist
     @PreUpdate
@@ -135,7 +142,8 @@ public class InterApplication {
     }
 
     public enum Status {
-        PENDING, VETTED, APPROVED, REJECTED, HIRED
+        PENDING, VETTED, APPROVED, REJECTED, HIRED,
+        DRAFT, SUBMITTED, DOCUMENT_VERIFICATION, RECRUITMENT_REVIEW, INTERVIEW, ASSIGNED, PLACED
     }
 
 }

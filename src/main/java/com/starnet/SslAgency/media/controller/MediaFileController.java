@@ -32,6 +32,7 @@ public class MediaFileController {
     private InterApplicationRepository interApplicationRepository;
 
     @PostMapping(value = "/application/{applicationId}/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN','RECRUITMENT_OFFICER','RECEPTIONIST')")
     public ResponseEntity<MediaFile> uploadApplicationPhoto(
             @PathVariable Long applicationId,
             @RequestPart("file") MultipartFile file,
@@ -47,6 +48,7 @@ public class MediaFileController {
     }
 
     @PostMapping(value = "/application/{applicationId}/resume", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN','RECRUITMENT_OFFICER','RECEPTIONIST')")
     public ResponseEntity<MediaFile> uploadApplicationResume(
             @PathVariable Long applicationId,
             @RequestPart("file") MultipartFile file,
@@ -79,7 +81,7 @@ public class MediaFileController {
             @RequestPart("files") List<MultipartFile> files
     ) throws IOException {
         Application app = applicationRepository.findById(applicationId)
-                .orElseThrow(() -> new RuntimeException("Application not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Application not found"));
         if (app.getStatus() == Application.Status.PENDING) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Showcase photos can only be added after vetting");
         }
@@ -96,6 +98,7 @@ public class MediaFileController {
 
 
     @PostMapping(value = "/inter/{interApplicationId}/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN','RECRUITMENT_OFFICER','RECEPTIONIST')")
     public ResponseEntity<MediaFile> uploadInterPhoto(
             @PathVariable Long interApplicationId,
             @RequestPart("file") MultipartFile file,
@@ -108,6 +111,7 @@ public class MediaFileController {
     }
 
     @PostMapping(value = "/inter/{interApplicationId}/resume", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN','RECRUITMENT_OFFICER','RECEPTIONIST')")
     public ResponseEntity<MediaFile> uploadInterResume(
             @PathVariable Long interApplicationId,
             @RequestPart("file") MultipartFile file,
@@ -140,7 +144,7 @@ public class MediaFileController {
             @RequestPart("files") List<MultipartFile> files
     ) throws IOException {
         InterApplication interApp = interApplicationRepository.findById(interApplicationId)
-                .orElseThrow(() -> new RuntimeException("InterApplication not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "InterApplication not found"));
         if (interApp.getStatus() == InterApplication.Status.PENDING) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Showcase photos can only be added after vetting");
         }

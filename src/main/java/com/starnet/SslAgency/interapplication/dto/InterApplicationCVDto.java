@@ -16,23 +16,21 @@ public class InterApplicationCVDto {
     private Long id;
     private String fullName;
     private String nationality;
-
-    private String jobRecruitment;
     private String religion;
-
+    private String jobRecruitment;
     private String currentProfession;
     private Double currentSalary;
-
     private LocalDate dob;
     private Integer age;
-
     private String maritalStatus;
     private String numberOfKids;
-
     private String educationLevel;
-
+    private String currentLocation;
+    private String phoneNumber;
+    private String email;
     private List<String> languages;
     private String employmentStatus;
-
-
+    private String passportPhotoUrl;
+    private String fullPhotoUrl;
+    private List<String> showcasePhotoUrls;
 }

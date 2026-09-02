@@ -23,6 +23,7 @@ public class ApplicationPublicDto {
 
     private List<String> videos;
     private List<String> showcasePhotos;
+    private String videoUrl;
 
     private Boolean hasCat;
     private Boolean hasDog;

@@ -7,25 +7,17 @@ import com.starnet.SslAgency.interapplication.repository.InterApplicationReposit
 import com.starnet.SslAgency.media.model.MediaFile;
 import com.starnet.SslAgency.media.repository.MediaFileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.UUID;
+import java.util.Set;
 
 @Service
 public class MediaFileService {
-
-    @Value("${file.upload-dir}")
-    private String uploadDir;
 
     @Autowired
     private MediaFileRepository mediaFileRepository;
@@ -35,6 +27,9 @@ public class MediaFileService {
 
     @Autowired
     private InterApplicationRepository interApplicationRepository;
+
+    @Autowired
+    private FileStorageService fileStorageService;
 
     public MediaFile store(Long applicationId, MultipartFile file, MediaFile.Kind kind) throws IOException {
         Application app = applicationRepository.findById(applicationId)
@@ -51,24 +46,17 @@ public class MediaFileService {
     private MediaFile saveFile(MultipartFile file, MediaFile.Kind kind,
                                Application app, InterApplication interApp) throws IOException {
 
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
-
         String original = Objects.requireNonNull(file.getOriginalFilename());
         String safeOriginal = original.replaceAll("\\s+", "_");
-
         String ext = getFileExtension(safeOriginal);
-        validateFileExtension(kind, ext);
+        validateFileExtension(kind, ext, file.getSize());
 
-        String filename = UUID.randomUUID() + ext;
-        Path filePath = uploadPath.resolve(filename);
-
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        FileStorageService.StoredFile stored = fileStorageService.store(file);
 
         MediaFile media = MediaFile.builder()
                 .fileName(safeOriginal)
                 .fileType(file.getContentType())
-                .fileUrl("/uploads/" + filename)
+                .fileUrl(stored.fileUrl())
                 .kind(kind)
                 .application(app)
                 .interApplication(interApp)
@@ -82,13 +70,30 @@ public class MediaFileService {
         return (dotIndex != -1) ? filename.substring(dotIndex).toLowerCase() : "";
     }
 
-    private void validateFileExtension(MediaFile.Kind kind, String ext) {
-        if ((kind == MediaFile.Kind.RESUME
-                || kind == MediaFile.Kind.NATIONAL_ID
-                || kind == MediaFile.Kind.BIRTH_CERTIFICATE
-                || kind == MediaFile.Kind.GOOD_CONDUCT)
-                && !(ext.equals(".pdf") || ext.equals(".doc") || ext.equals(".docx"))) {
-            throw new IllegalArgumentException("Invalid format. Only PDF/DOC/DOCX allowed for " + kind);
+    private static final Set<String> IMAGE_EXT = Set.of(".jpg", ".jpeg", ".png", ".webp", ".heic");
+    private static final Set<String> DOC_EXT = Set.of(".pdf", ".doc", ".docx");
+    private static final Set<String> VIDEO_EXT = Set.of(".mp4", ".webm", ".mov");
+
+    private void validateFileExtension(MediaFile.Kind kind, String ext, long size) {
+        switch (kind) {
+            case PASSPORT, FULL_PHOTO, SHOWCASE_PHOTO:
+                if (!IMAGE_EXT.contains(ext))
+                    throw new IllegalArgumentException("Only JPG, PNG, WebP, HEIC allowed for " + kind);
+                if (size > 8 * 1024 * 1024)
+                    throw new IllegalArgumentException(kind + " must be under 8 MB");
+                break;
+            case RESUME, NATIONAL_ID, BIRTH_CERTIFICATE, GOOD_CONDUCT:
+                if (!DOC_EXT.contains(ext))
+                    throw new IllegalArgumentException("Only PDF, DOC, DOCX allowed for " + kind);
+                if (size > 10 * 1024 * 1024)
+                    throw new IllegalArgumentException(kind + " must be under 10 MB");
+                break;
+            case VIDEO:
+                if (!VIDEO_EXT.contains(ext))
+                    throw new IllegalArgumentException("Only MP4, WebM, MOV allowed for " + kind);
+                if (size > 50 * 1024 * 1024)
+                    throw new IllegalArgumentException("Video must be under 50 MB");
+                break;
         }
     }
 
@@ -131,13 +136,8 @@ public class MediaFileService {
 
     public void delete(MediaFile mf) {
         mediaFileRepository.delete(mf);
-
-        try {
-            Path filePath = Paths.get(uploadDir).resolve(
-                    mf.getFileUrl().replace("/uploads/", "")
-            );
-            Files.deleteIfExists(filePath);
-        } catch (IOException ignored) {
+        if (mf.getFileUrl() != null && !mf.getFileUrl().startsWith("http")) {
+            fileStorageService.delete(mf.getFileUrl());
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.starnet.SslAgency.security;
 
+import com.starnet.SslAgency.applicant.repository.ApplicantRepository;
 import com.starnet.SslAgency.processor.repository.StaffRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -23,6 +24,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Autowired
     private StaffRepository staffRepository;
+
+    @Autowired
+    private ApplicantRepository applicantRepository;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -49,16 +53,26 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         try {
             Claims claims = jwtUtil.parse(token);
-            String email = claims.getSubject();
+            String subject = claims.getSubject();
+            String role = claims.get("role", String.class);
 
-            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                staffRepository.findByEmail(email).ifPresent(staff -> {
-                    log.info("JWT valid for user: {}, role: {}", staff.getEmail(), staff.getRole());
-                    // Attach role with ROLE_ prefix
-                    var authority = new SimpleGrantedAuthority("ROLE_" + staff.getRole().name());
-                    var authToken = new UsernamePasswordAuthenticationToken(staff, null, List.of(authority));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                });
+            if (subject != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                if ("APPLICANT".equals(role)) {
+                    applicantRepository.findByApplicantNumber(subject).ifPresent(applicant -> {
+                        log.info("JWT valid for applicant: {}", applicant.getApplicantNumber());
+                        var authority = new SimpleGrantedAuthority("ROLE_APPLICANT");
+                        var authToken = new UsernamePasswordAuthenticationToken(applicant, null, List.of(authority));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    });
+                } else {
+                    staffRepository.findByEmail(subject).ifPresent(staff -> {
+                        log.info("JWT valid for user: {}, role: {}", staff.getEmail(), staff.getRole());
+                        // Attach role with ROLE_ prefix
+                        var authority = new SimpleGrantedAuthority("ROLE_" + staff.getRole().name());
+                        var authToken = new UsernamePasswordAuthenticationToken(staff, null, List.of(authority));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    });
+                }
             }
 
         } catch (Exception e) {

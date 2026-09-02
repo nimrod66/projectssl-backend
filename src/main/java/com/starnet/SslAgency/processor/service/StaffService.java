@@ -4,8 +4,10 @@ import com.starnet.SslAgency.processor.dto.StaffRequestDto;
 import com.starnet.SslAgency.processor.model.Staff;
 import com.starnet.SslAgency.processor.repository.StaffRepository;
 import org.springframework.beans.factory.annotation.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -37,7 +39,7 @@ public class StaffService {
 
     public Staff getStaff(Long id) {
         return staffRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Staff not found in records"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Staff not found"));
     }
 
     public Staff updateStaff(Long id, StaffRequestDto dto) {

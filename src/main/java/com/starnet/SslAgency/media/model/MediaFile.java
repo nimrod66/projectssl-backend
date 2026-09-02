@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "media_files")
 @Data
@@ -40,6 +42,8 @@ public class MediaFile {
     @JoinColumn(name = "inter_application_id", nullable = true)
     @JsonIgnore
     private InterApplication interApplication;
+
+    private LocalDate expiryDate;
 
     public enum Kind {PASSPORT, NATIONAL_ID, FULL_PHOTO, RESUME, BIRTH_CERTIFICATE, GOOD_CONDUCT, VIDEO, SHOWCASE_PHOTO}
 }

@@ -9,7 +9,9 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +34,16 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody @Valid StaffRequestDto dto) {
+        boolean bootstrap = staffRepository.count() == 0;
+        if (!bootstrap) {
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            boolean isAllowed = auth != null && auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_SUPER_ADMIN"));
+            if (!isAllowed) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Staff registration requires an authenticated ADMIN");
+            }
+        }
         Staff saved = staffService.createStaff(dto);
         return ResponseEntity.ok(Map.of("id", saved.getId(), "firstName", saved.getFirstName(), "lastName", saved.getLastName(), "phoneNumber", saved.getPhoneNumber(), "email", saved.getEmail(), "role", saved.getRole().name()));
     }
@@ -40,7 +52,8 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody Map<String, String> payload) {
         String email = payload.get("email");
         String password = payload.get("password");
-        Staff staff = staffRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Invalid Credentials"));
+        Staff staff = staffRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
         if (!passwordEncoder.matches(password, staff.getPasswordHash())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }

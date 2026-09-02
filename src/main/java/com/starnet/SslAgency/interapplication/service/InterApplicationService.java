@@ -1,7 +1,6 @@
 package com.starnet.SslAgency.interapplication.service;
 
 import com.starnet.SslAgency.interapplication.dto.InterApplicationCVDto;
-import com.starnet.SslAgency.interapplication.dto.InterApplicationFilterDto;
 import com.starnet.SslAgency.interapplication.dto.InterApplicationRequestDto;
 import com.starnet.SslAgency.interapplication.model.InterApplication;
 import com.starnet.SslAgency.interapplication.repository.InterApplicationRepository;
@@ -11,16 +10,15 @@ import com.starnet.SslAgency.processor.model.Staff;
 import com.starnet.SslAgency.processor.repository.StaffRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,6 +45,21 @@ public class InterApplicationService {
                 ? interApp.getLanguages().stream().map(Enum::name).toList()
                 : List.of();
 
+        List<String> showcaseUrls = new ArrayList<>();
+        String passportUrl = null;
+        String fullPhotoUrl = null;
+        if (interApp.getMediaFiles() != null) {
+            passportUrl = interApp.getMediaFiles().stream()
+                    .filter(m -> m.getKind() == MediaFile.Kind.PASSPORT)
+                    .map(MediaFile::getFileUrl).findFirst().orElse(null);
+            fullPhotoUrl = interApp.getMediaFiles().stream()
+                    .filter(m -> m.getKind() == MediaFile.Kind.FULL_PHOTO)
+                    .map(MediaFile::getFileUrl).findFirst().orElse(null);
+            showcaseUrls = interApp.getMediaFiles().stream()
+                    .filter(m -> m.getKind() == MediaFile.Kind.SHOWCASE_PHOTO)
+                    .map(MediaFile::getFileUrl).limit(6).collect(Collectors.toList());
+        }
+
         return InterApplicationCVDto.builder()
                 .id(interApp.getId())
                 .fullName(fullName)
@@ -60,12 +73,19 @@ public class InterApplicationService {
                 .maritalStatus(interApp.getMaritalStatus() != null ? interApp.getMaritalStatus().name() : null)
                 .numberOfKids(interApp.getNumberOfKids())
                 .educationLevel(interApp.getEducationLevel() != null ? interApp.getEducationLevel().name() : null)
+                .currentLocation(interApp.getCurrentLocation())
+                .phoneNumber(interApp.getPhoneNumber())
+                .email(interApp.getEmail())
                 .languages(languageList)
                 .employmentStatus(interApp.getEmploymentStatus() != null ? interApp.getEmploymentStatus().name() : null)
+                .passportPhotoUrl(passportUrl)
+                .fullPhotoUrl(fullPhotoUrl)
+                .showcasePhotoUrls(showcaseUrls)
                 .build();
     }
 
 
+    @Transactional
     public InterApplication createInterApplication(InterApplicationRequestDto dto) {
         InterApplication interApplication = InterApplication.builder()
                 .firstName(dto.getFirstName())
@@ -108,6 +128,7 @@ public class InterApplicationService {
                 )
 
                 .status(InterApplication.Status.PENDING)
+                .videoUrl(dto.getVideoUrl())
                 .build();
 
         return interApplicationRepository.save(interApplication);
@@ -120,9 +141,14 @@ public class InterApplicationService {
                 .toList();
     }
 
+    public List<InterApplication> listByStatus(String status) {
+        InterApplication.Status st = InterApplication.Status.valueOf(status.toUpperCase());
+        return interApplicationRepository.findByStatus(st, Sort.by(Sort.Direction.DESC, "createdAt"));
+    }
+
     public InterApplication getInterApplication(Long id) {
         return interApplicationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Application History not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Application not found"));
     }
 
     public List<InterApplication> getPublicInterApplications() {
@@ -132,20 +158,22 @@ public class InterApplicationService {
         );
     }
 
+    @Transactional
     public InterApplication markVetted(Long interAppId, Long staffId) {
         InterApplication interApp = getInterApplication(interAppId);
-        Staff staff = staffRepository.findById(staffId).orElseThrow(() -> new RuntimeException("Staff not found"));
+        Staff staff = staffRepository.findById(staffId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Staff not found"));
         interApp.setStatus(InterApplication.Status.VETTED);
         interApp.setVettedBy(staff);
         interApp.setVettedAt(LocalDateTime.now());
         return interApplicationRepository.save(interApp);
     }
 
+    @Transactional
     public InterApplication approve(Long interAppId, Long staffId) {
         InterApplication interApp = interApplicationRepository.findById(interAppId)
-                .orElseThrow(() -> new RuntimeException("Application not found in records"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Application not found"));
 
-        Staff staff = staffRepository.findById(staffId).orElseThrow(() -> new RuntimeException("Staff not found"));
+        Staff staff = staffRepository.findById(staffId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Staff not found"));
 
         List<MediaFile> showcase = mediaFileService.findByInterApplicationAndKind(interAppId, MediaFile.Kind.SHOWCASE_PHOTO);
         if (showcase.isEmpty()) {
@@ -164,12 +192,14 @@ public class InterApplicationService {
         return interApplicationRepository.save(interApp);
     }
 
+    @Transactional
     public InterApplication reject(Long interAppId, Long staffId) {
         InterApplication interApp = markVetted(interAppId, staffId);
         interApp.setStatus(InterApplication.Status.REJECTED);
         return interApplicationRepository.save(interApp);
     }
 
+    @Transactional
     public InterApplication markHired(Long interAppId, Long staffId) {
         InterApplication interApp = getInterApplication(interAppId);
 
@@ -178,7 +208,7 @@ public class InterApplicationService {
         }
 
         Staff staff = staffRepository.findById(staffId)
-                .orElseThrow(() -> new RuntimeException("Staff not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Staff not found"));
 
         interApp.setStatus(InterApplication.Status.HIRED);
         interApp.setHiredBy(staff);
@@ -187,6 +217,7 @@ public class InterApplicationService {
         return interApplicationRepository.save(interApp);
     }
 
+    @Transactional
     public InterApplication restoreToApproved(Long interAppId, Long staffId) {
         InterApplication interApp = getInterApplication(interAppId);
         if (interApp.getStatus() != InterApplication.Status.HIRED) {
@@ -200,40 +231,8 @@ public class InterApplicationService {
         return interApplicationRepository.save(interApp);
     }
 
+    @Transactional
     public void deleteInternationalApplication(Long id) {
         interApplicationRepository.deleteById(id);
-    }
-
-    public class ApplicationSpecification {
-
-        public static class InterApplicationSpecification {
-
-        }
-
-        // Creates the dynamic Specification object from the DTO
-        public static Specification<InterApplication> filterBy(InterApplicationFilterDto filter) {
-
-            return (root, query, builder) -> {
-                List<Predicate> predicates = new ArrayList<>();
-
-                if (filter.getNationality() != null && !filter.getNationality().isEmpty()) {
-                    predicates.add((Predicate) builder.equal(
-                            root.get("nationality"),
-                            filter.getNationality()
-                    ));
-                }
-
-                if (filter.getJobRecruitment() != null && !filter.getJobRecruitment().isEmpty()) {
-                    predicates.add((Predicate) builder.like(
-                            builder.lower(root.get("jobRecruitment")),
-                            "%" + filter.getJobRecruitment().toLowerCase() + "%"
-                    ));
-                }
-
-                Predicate[] predicateArray = predicates.toArray(new Predicate[0]);
-                return builder.and();
-            };
-
-        }
     }
 }

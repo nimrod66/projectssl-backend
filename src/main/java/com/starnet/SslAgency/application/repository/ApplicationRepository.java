@@ -8,10 +8,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 
 public interface ApplicationRepository extends JpaRepository<Application, Long> {
-    @Query("SELECT a FROM Application a WHERE " +
+    @Query("SELECT a FROM LegacyApplication a WHERE " +
             "LOWER(a.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(a.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(a.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -24,5 +25,6 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 
     List<Application> findByStatus(Application.Status status);
 
-
+    Optional<Application> findByEmail(String email);
+    Optional<Application> findByPhoneNumber(String phoneNumber);
 }

@@ -2,6 +2,7 @@ package com.starnet.SslAgency.processor.model;
 
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -36,10 +37,11 @@ public class Staff {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @Column(nullable = false)
+    @JsonIgnore
     private String passwordHash;
 
     public enum Role {
-        SUPER_ADMIN, ADMIN, RECEPTIONIST
+        SUPER_ADMIN, ADMIN, RECEPTIONIST, RECRUITMENT_OFFICER
     }
 
 }

@@ -4,6 +4,7 @@ package com.starnet.SslAgency.application.model;
 import com.starnet.SslAgency.media.model.MediaFile;
 import com.starnet.SslAgency.processor.model.Staff;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
@@ -24,7 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Entity
+@Entity(name = "LegacyApplication")
 
 @Table(name = "applicants")
 @EntityListeners(AuditingEntityListener.class)
@@ -39,12 +40,16 @@ public class Application {
 
     //Applicants info
     @NotBlank
+    @Column(name = "first_name", nullable = false)
     private String firstName;
+    @Column(name = "middle_name")
     private String middleName;
     @NotBlank
+    @Column(name = "last_name", nullable = false)
     private String lastName;
 
     @Pattern(regexp = "^(\\+254|0)(7\\d{8}|1\\d{8})$", message = "Invalid Kenyan phone number")
+    @Column(name = "phone_number", nullable = false)
     private String phoneNumber;
     @Email
     @NotBlank
@@ -89,6 +94,8 @@ public class Application {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    private String videoUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private Staff vettedBy;
     private LocalDateTime vettedAt;
@@ -104,11 +111,17 @@ public class Application {
     @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MediaFile> mediaFiles = new ArrayList<>();
 
+    @Column(name = "password_hash")
+    @JsonIgnore
+    private String passwordHash;
+    private String referenceNumber;
+
     @CreatedDate
-    @Column(updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @PrePersist
@@ -131,5 +144,5 @@ public class Application {
         LOCAL_JOBS, INTERNATIONAL_JOBS
     }
 
-    public enum Status {PENDING, VETTED, APPROVED, REJECTED, HIRED}
+    public enum Status {DRAFT, SUBMITTED, DOCUMENT_VERIFICATION, RECRUITMENT_REVIEW, INTERVIEW, APPROVED, REJECTED, ASSIGNED, PLACED, PENDING, VETTED, HIRED, ACTIVE}
 }

@@ -9,6 +9,8 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 
+RUN mkdir -p /app/uploads && chown -R 1000:1000 /app/uploads
+VOLUME ["/app/uploads"]
 EXPOSE 9090
 USER 1000
 ENTRYPOINT ["java","-jar","app.jar"]

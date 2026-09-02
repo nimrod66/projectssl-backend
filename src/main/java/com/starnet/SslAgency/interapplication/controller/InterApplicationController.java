@@ -7,12 +7,14 @@ import com.starnet.SslAgency.interapplication.repository.InterApplicationReposit
 import com.starnet.SslAgency.interapplication.service.InterApplicationService;
 import com.starnet.SslAgency.media.model.MediaFile;
 import com.starnet.SslAgency.processor.model.Staff;
-import com.starnet.SslAgency.processor.repository.StaffRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,49 +27,16 @@ public class InterApplicationController {
     private InterApplicationService interApplicationService;
 
     @Autowired
-    private StaffRepository staffRepository;
-
-    @Autowired
     private InterApplicationRepository interApplicationRepository;
 
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<InterApplicationResponseDto> createApplication(@RequestBody @Valid InterApplicationRequestDto dto) {
-        InterApplication interApplication = interApplicationService.createInterApplication(dto);
-        return ResponseEntity.ok(toResponseDto(interApplication));
-    }
-
     @GetMapping
-    public List<InterApplicationResponseDto> getAllInterApplications() {
-        return interApplicationService.getAllInterApplications().stream().map(this::toResponseDto).toList();
-    }
-
-    @GetMapping("/public")
-    public List<InterApplicationPublicDto> getPublicInterApplications() {
-        List<InterApplication> interApp = interApplicationService.getPublicInterApplications();
-        return interApp.stream()
-                .map(this::toPublicDto)
-                .toList();
-    }
-
-    @PostMapping("/filter")
-    public List<InterApplication> findInterApplications(InterApplicationFilterDto filter) {
-        if (filter.getNationality() != null && filter.getJobRecruitment() != null) {
-            return interApplicationRepository.findByNationalityAndJobRecruitment(
-                    filter.getNationality(),
-                    filter.getJobRecruitment()
-            );
-        }
-
-        return interApplicationRepository.findAll();
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<InterApplicationResponseDto> getInterApplication(@PathVariable Long id) {
-        InterApplication interApplication = interApplicationService.getInterApplication(id);
-        return ResponseEntity.ok(toResponseDto(interApplication));
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN','RECRUITMENT_OFFICER','RECEPTIONIST')")
+    public List<InterApplicationResponseDto> getAllInterApplications(@RequestParam(required = false) String status) {
+        return (status != null ? interApplicationService.listByStatus(status) : interApplicationService.getAllInterApplications()).stream().map(this::toResponseDto).toList();
     }
 
     @GetMapping("/{id}/cv")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN','RECRUITMENT_OFFICER','RECEPTIONIST')")
     public ResponseEntity<InterApplicationCVDto> getCV(@PathVariable Long id) {
         InterApplicationCVDto dto = interApplicationService.generateCVDto(id);
         return ResponseEntity.ok(dto);
@@ -75,6 +44,7 @@ public class InterApplicationController {
 
 
     @PatchMapping("/{id}/vet")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN','RECRUITMENT_OFFICER')")
     public ResponseEntity<InterApplicationResponseDto> vet(@PathVariable Long id, Authentication auth) {
         Staff staff = getAuthenticatedStaff(auth);
         InterApplication interApp = interApplicationService.markVetted(id, staff.getId());
@@ -82,6 +52,7 @@ public class InterApplicationController {
     }
 
     @PatchMapping("/{id}/approve")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<InterApplicationResponseDto> approve(@PathVariable Long id, Authentication auth) {
         Staff staff = getAuthenticatedStaff(auth);
         InterApplication interApp = interApplicationService.approve(id, staff.getId());
@@ -89,6 +60,7 @@ public class InterApplicationController {
     }
 
     @PatchMapping("/{id}/reject")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN','RECRUITMENT_OFFICER')")
     public ResponseEntity<InterApplicationResponseDto> reject(@PathVariable Long id, Authentication auth) {
         Staff staff = getAuthenticatedStaff(auth);
         InterApplication interApp = interApplicationService.reject(id, staff.getId());
@@ -96,6 +68,7 @@ public class InterApplicationController {
     }
 
     @PatchMapping("/{id}/hired")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<InterApplicationResponseDto> markHired(@PathVariable Long id, Authentication auth) {
         Staff staff = getAuthenticatedStaff(auth);
         InterApplication interApp = interApplicationService.markHired(id, staff.getId());
@@ -103,6 +76,7 @@ public class InterApplicationController {
     }
 
     @PatchMapping("/{id}/restore")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<InterApplicationResponseDto> restoreToApproved(@PathVariable Long id, Authentication auth) {
         Staff staff = getAuthenticatedStaff(auth);
         InterApplication interApp = interApplicationService.restoreToApproved(id, staff.getId());
@@ -110,6 +84,7 @@ public class InterApplicationController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Void> deleteInternationalApplication(@PathVariable Long id) {
         interApplicationService.deleteInternationalApplication(id);
         return ResponseEntity.noContent().build();
@@ -117,46 +92,9 @@ public class InterApplicationController {
 
     private Staff getAuthenticatedStaff(Authentication auth) {
         if (auth == null || !(auth.getPrincipal() instanceof Staff staff)) {
-            throw new RuntimeException("No Authenticated staff found");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No authenticated staff found");
         }
         return staff;
-    }
-
-    private InterApplicationPublicDto toPublicDto(InterApplication interApp) {
-        List<MediaFile> mediaFiles = interApp.getMediaFiles() != null ? interApp.getMediaFiles() : List.of();
-        return InterApplicationPublicDto.builder()
-                .id(interApp.getId())
-                .fullName(Stream.of(interApp.getFirstName(), interApp.getMiddleName(), interApp.getLastName()).filter(s -> s != null && !s.isBlank()).reduce((s1, s2) -> s1 + " " + s2).orElse(""))
-                .age(interApp.getAge())
-                .nationality(interApp.getNationality())
-                .currentProfession(interApp.getCurrentProfession())
-                .currentLocation(interApp.getCurrentLocation())
-                .languages(interApp.getLanguages() != null ? interApp.getLanguages().stream().map(Enum::name).toList() : List.of())
-                .videos(mediaFiles.stream().filter(m -> m.getKind() == MediaFile.Kind.VIDEO)
-                        .map(MediaFile::getFileUrl).toList())
-                .showcasePhotos(mediaFiles.stream().filter(m -> m.getKind() == MediaFile.Kind.SHOWCASE_PHOTO)
-                        .map(MediaFile::getFileUrl).toList())
-                .build();
-    }
-
-    private InterApplicationCVDto toCVDto(InterApplication interA) {
-        return InterApplicationCVDto.builder()
-                .id(interA.getId())
-                .fullName(Stream.of(interA.getFirstName(), interA.getMiddleName(), interA.getLastName()).filter(s -> s != null && !s.isBlank()).reduce((s1, s2) -> s1 + " " + s2).orElse(""))
-                .nationality(interA.getNationality())
-                .jobRecruitment(interA.getJobRecruitment() != null ? interA.getJobRecruitment().name() : null)
-                .currentProfession(interA.getCurrentProfession())
-                .currentSalary(interA.getCurrentSalary())
-                .dob(interA.getDob())
-                .age(interA.getAge())
-                .maritalStatus(interA.getMaritalStatus() != null ? interA.getMaritalStatus().name() : null)
-                .numberOfKids(interA.getNumberOfKids())
-                .educationLevel(interA.getEducationLevel() != null ? interA.getEducationLevel().name() : null)
-                .languages(interA.getLanguages() != null ? interA.getLanguages().stream().map(Enum::name).toList() : List.of())
-                .employmentStatus(interA.getEmploymentStatus() != null ? interA.getEmploymentStatus().name() : null)
-
-                .build();
-
     }
 
     private InterApplicationResponseDto toResponseDto(InterApplication interA) {
@@ -185,7 +123,7 @@ public class InterApplicationController {
                 .vettedById(interA.getVettedBy() != null ? interA.getVettedBy().getId() : null)
                 .vettedByName(interA.getVettedBy() != null ? interA.getVettedBy().getFirstName() + " " + interA.getVettedBy().getLastName() : null)
                 .approvedById(interA.getApprovedBy() != null ? interA.getApprovedBy().getId() : null)
-                .approvedByName(interA.getApprovedBy() != null ? interA.getApprovedBy().getFirstName() + " " + interA.getVettedBy().getLastName() : null)
+                .approvedByName(interA.getApprovedBy() != null ? interA.getApprovedBy().getFirstName() + " " + interA.getApprovedBy().getLastName() : null)
                 .passportPhotos(mediaFiles.stream().filter(m -> m.getKind() == MediaFile.Kind.PASSPORT)
                         .map(MediaFile::getFileUrl).toList())
                 .fullPhotos(mediaFiles.stream().filter(m -> m.getKind() == MediaFile.Kind.FULL_PHOTO)

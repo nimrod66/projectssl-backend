@@ -47,6 +47,7 @@ public class ApplicationRequestDto {
     private List<String> languages;
     private String employmentStatus;
     private String jobInterest;
+    private String videoUrl;
 
 
 }

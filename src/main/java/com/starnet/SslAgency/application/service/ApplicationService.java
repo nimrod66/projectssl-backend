@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -35,6 +36,7 @@ public class ApplicationService {
     @Autowired
     private MediaFileService mediaFileService;
 
+    @Transactional
     public Application createApplication(ApplicationRequestDto dto) {
         Application application = Application.builder()
                 .firstName(dto.getFirstName())
@@ -74,6 +76,7 @@ public class ApplicationService {
                 )
 
                 .status(Application.Status.PENDING)
+                .videoUrl(dto.getVideoUrl())
                 .build();
 
         return applicationRepository.save(application);
@@ -143,24 +146,26 @@ public class ApplicationService {
 
     public Application getApplication(Long id) {
         return applicationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Application History not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Application not found"));
     }
 
+    @Transactional
     public Application markVetted(Long appId, Long staffId) {
         Application app = getApplication(appId);
-        Staff staff = staffRepository.findById(staffId).orElseThrow(() -> new RuntimeException("Staff not found"));
+        Staff staff = staffRepository.findById(staffId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Staff not found"));
         app.setStatus(Application.Status.VETTED);
         app.setVettedBy(staff);
         app.setVettedAt(LocalDateTime.now());
         return applicationRepository.save(app);
     }
 
+    @Transactional
     public Application approve(Long applicationId, Long staffId) {
         Application app = applicationRepository.findById(applicationId)
 
-                .orElseThrow(() -> new RuntimeException("Application not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Application not found"));
 
-        Staff staff = staffRepository.findById(staffId).orElseThrow(() -> new RuntimeException("Staff not found"));
+        Staff staff = staffRepository.findById(staffId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Staff not found"));
 
         List<MediaFile> showcase = mediaFileService.findByApplicationAndKind(applicationId, MediaFile.Kind.SHOWCASE_PHOTO);
         if (showcase.isEmpty()) {
@@ -180,12 +185,14 @@ public class ApplicationService {
     }
 
 
+    @Transactional
     public Application reject(Long appId, Long staffId) {
         Application app = markVetted(appId, staffId);
         app.setStatus(Application.Status.REJECTED);
         return applicationRepository.save(app);
     }
 
+    @Transactional
     public Application markHired(Long applicationId, Long staffId) {
         Application app = getApplication(applicationId);
 
@@ -195,7 +202,7 @@ public class ApplicationService {
         }
 
         Staff staff = staffRepository.findById(staffId)
-                .orElseThrow(() -> new RuntimeException("Staff not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Staff not found"));
 
         app.setStatus(Application.Status.HIRED);
         app.setHiredBy(staff);
@@ -205,6 +212,7 @@ public class ApplicationService {
     }
 
 
+    @Transactional
     public Application restoreToApproved(Long appId, Long staffId) {
         Application app = getApplication(appId);
         if (app.getStatus() != Application.Status.HIRED) {
@@ -221,6 +229,7 @@ public class ApplicationService {
         return applicationRepository.save(app);
     }
 
+    @Transactional
     public void deleteApplication(Long id) {
         applicationRepository.deleteById(id);
     }
@@ -229,6 +238,11 @@ public class ApplicationService {
     public Page<Application> listByStatus(String status, Pageable pageable) {
         Application.Status st = Application.Status.valueOf(status.toUpperCase());
         return applicationRepository.findByStatus(st, pageable);
+    }
+
+    public List<Application> listByStatus(String status) {
+        Application.Status st = Application.Status.valueOf(status.toUpperCase());
+        return applicationRepository.findByStatus(st);
     }
 
     public List<Application> getPublicApplications() {
